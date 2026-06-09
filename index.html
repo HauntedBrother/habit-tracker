@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Habit Tracker</title>
+    <style>
+        :root {
+            /* Sunset Theme */
+            --bg-gradient: linear-gradient(135deg, #ff4b2b, #ff9068, #ffb75e, #8e2de2);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #333;
+            --text-muted: #666;
+            --accent: #ff4b2b;
+            --success: #4caf50;
+            --fail: #f44336;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Top Stats Dashboard */
+        .stats-banner {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .add-habit-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .btn-add {
+            background: white;
+            color: var(--accent);
+            padding: 0 20px;
+            font-size: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .habits-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .habit-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .habit-info {
+            flex: 1;
+        }
+
+        .habit-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .habit-streak {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .habit-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn-check {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #eee;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-check.done {
+            background: var(--success);
+        }
+
+        .btn-calendar, .btn-delete {
+            background: transparent;
+            font-size: 22px;
+            padding: 5px;
+        }
+        
+        .btn-calendar { color: var(--text-muted); }
+        .btn-delete { color: var(--fail); opacity: 0.7; }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        .modal-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            background: #f5f5f5;
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        .modal-nav button {
+            background: transparent;
+            font-size: 18px;
+            padding: 5px 15px;
+            color: var(--accent);
+        }
+
+        .modal-nav span {
+            font-weight: bold;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            text-align: center;
+        }
+
+        .cal-header {
+            font-weight: bold;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .cal-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 14px;
+            background: #f5f5f5;
+        }
+
+        .cal-day.done { background: var(--success); color: white; }
+        .cal-day.missed { background: var(--fail); color: white; }
+        .cal-day.empty { background: transparent; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>My Habits</h1>
+        
+        <div class="stats-banner">
+            <div class="stat-box">
+                <span class="stat-value" id="statDone">0/0</span>
+                <span class="stat-label">Done Today</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-value" id="statPerfect">0</span>
+                <span class="stat-label">Perfect Days 🔥</span>
+            </div>
+        </div>
+
+        <div class="add-habit-container">
+            <input type="text" id="habitInput" placeholder="Enter a new habit..." onkeypress="handleKeyPress(event)">
+            <button class="btn-add" onclick="addHabit()">Add</button>
+        </div>
+
+        <div class="habits-list" id="habitsList">
+            </div>
+    </div>
+
+    <div class="modal" id="calendarModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Habit History</h2>
+                <button onclick="closeModal()" style="background:none; font-size:24px; color:var(--text-muted)">&times;</button>
+            </div>
+            
+            <div class="modal-nav">
+                <button onclick="changeMonth(-1)">&#8592;</button>
+                <span id="monthLabel"></span>
+                <button onclick="changeMonth(1)">&#8594;</button>
+            </div>
+
+            <div class="calendar-grid" id="calendarGrid">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let habits = JSON.parse(localStorage.getItem('dashHabits')) || [];
+        let viewYear = new Date().getFullYear();
+        let viewMonth = new Date().getMonth();
+        let viewingHabitId = null;
+        
+        function getLocalISODate(date) {
+            const offset = date.getTimezoneOffset();
+            const dateLocal = new Date(date.getTime() - (offset*60*1000));
+            return dateLocal.toISOString().split('T')[0];
+        }
+
+        const todayStr = getLocalISODate(new Date());
+
+        function saveHabits() {
+            localStorage.setItem('dashHabits', JSON.stringify(habits));
+            renderDashboard();
+        }
+
+        function addHabit() {
+            const input = document.getElementById('habitInput');
+            const name = input.value.trim();
+            if (name) {
+                habits.push({
+                    id: Date.now().toString(),
+                    name: name,
+                    history: {} 
+                });
+                input.value = '';
+                saveHabits();
+            }
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') addHabit();
+        }
+
+        function deleteHabit(id) {
+            if(confirm("Delete this habit permanently?")) {
+                habits = habits.filter(h => h.id !== id);
+                saveHabits();
+            }
+        }
+
+        function toggleHabit(id) {
+            const habit = habits.find(h => h.id === id);
+            if (habit) {
+                if (habit.history[todayStr]) {
+                    delete habit.history[todayStr];
+                } else {
+                    habit.history[todayStr] = true;
+                }
+                saveHabits();
+            }
+        }
+
+        // Calculate Current and Best Streaks
+        function getStreaks(history) {
+            const days = Object.keys(history).sort();
+            if (days.length === 0) return { current: 0, best: 0 };
+
+            // Calculate Best
+            let best = 0;
+            let currentRun = 0;
+            let prevDate = null;
+
+            days.forEach(dayStr => {
+                const parts = dayStr.split('-');
+                const currDate = new Date(parts[0], parts[1]-1, parts[2]); // local time
+                
+                if (!prevDate) {
+                    currentRun = 1;
+                } else {
+                    const diffTime = currDate.getTime() - prevDate.getTime();
+                    const diffDays = Math.round(diffTime / (1000 * 3600 * 24));
+                    
+                    if (diffDays === 1) currentRun++;
+                    else currentRun = 1;
+                }
+                if (currentRun > best) best = currentRun;
+                prevDate = currDate;
+            });
+
+            // Calculate Current
+            let current = 0;
+            let checkDate = new Date();
+            let checkStr = getLocalISODate(checkDate);
+            
+            if (!history[checkStr]) {
+                checkDate.setDate(checkDate.getDate() - 1);
+                checkStr = getLocalISODate(checkDate);
+            }
+            
+            while (history[checkStr]) {
+                current++;
+                checkDate.setDate(checkDate.getDate() - 1);
+                checkStr = getLocalISODate(checkDate);
+            }
+
+            return { current, best };
+        }
+
+        // Calculate continuous days where ALL active habits were completed
+        function getPerfectStreak() {
+            if (habits.length === 0) return 0;
+
+            let current = 0;
+            let checkDate = new Date();
+            let checkStr = getLocalISODate(checkDate);
+            
+            const isPerfect = (dateStr) => habits.every(h => h.history[dateStr]);
+            
+            // If not perfect today, check if it was perfect yesterday
+            if (!isPerfect(checkStr)) {
+                checkDate.setDate(checkDate.getDate() - 1);
+                checkStr = getLocalISODate(checkDate);
+                if (!isPerfect(checkStr)) return 0;
+            }
+            
+            while (isPerfect(checkStr)) {
+                current++;
+                checkDate.setDate(checkDate.getDate() - 1);
+                checkStr = getLocalISODate(checkDate);
+            }
+            return current;
+        }
+
+        function renderDashboard() {
+            // Update Top Stats
+            const totalHabits = habits.length;
+            const doneToday = habits.filter(h => h.history[todayStr]).length;
+            
+            document.getElementById('statDone').innerText = `${doneToday}/${totalHabits}`;
+            document.getElementById('statPerfect').innerText = getPerfectStreak();
+
+            // Render Habit List
+            const list = document.getElementById('habitsList');
+            list.innerHTML = '';
+
+            habits.forEach(habit => {
+                const isDoneToday = !!habit.history[todayStr];
+                const streaks = getStreaks(habit.history);
+
+                const card = document.createElement('div');
+                card.className = 'habit-card';
+                card.innerHTML = `
+                    <div class="habit-info">
+                        <div class="habit-name">${habit.name}</div>
+                        <div class="habit-streak">
+                            🔥 Cur: <strong>${streaks.current}</strong> &nbsp;|&nbsp; 🏆 Best: <strong>${streaks.best}</strong>
+                        </div>
+                    </div>
+                    <div class="habit-actions">
+                        <button class="btn-calendar" onclick="openCalendar('${habit.id}')">📅</button>
+                        <button class="btn-check ${isDoneToday ? 'done' : ''}" onclick="toggleHabit('${habit.id}')">
+                            ${isDoneToday ? '✓' : ''}
+                        </button>
+                        <button class="btn-delete" onclick="deleteHabit('${habit.id}')">🗑️</button>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // --- Calendar Logic ---
+
+        function openCalendar(id) {
+            const habit = habits.find(h => h.id === id);
+            if (!habit) return;
+
+            viewingHabitId = id;
+            viewYear = new Date().getFullYear();
+            viewMonth = new Date().getMonth();
+
+            document.getElementById('modalTitle').innerText = habit.name;
+            document.getElementById('calendarModal').classList.add('active');
+            
+            renderCalendar();
+        }
+
+        function changeMonth(delta) {
+            viewMonth += delta;
+            if (viewMonth < 0) {
+                viewMonth = 11;
+                viewYear--;
+            } else if (viewMonth > 11) {
+                viewMonth = 0;
+                viewYear++;
+            }
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            if (!viewingHabitId) return;
+            const habit = habits.find(h => h.id === viewingHabitId);
+            
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+            days.forEach(d => {
+                grid.innerHTML += `<div class="cal-header">${d}</div>`;
+            });
+
+            const renderDate = new Date(viewYear, viewMonth);
+            document.getElementById('monthLabel').innerText = renderDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+            const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+            const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+            // Pad beginning of month
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div class="cal-day empty"></div>`;
+            }
+
+            const creationDate = new Date(parseInt(habit.id)); 
+            const creationStr = getLocalISODate(creationDate);
+
+            // Fill days
+            for (let i = 1; i <= daysInMonth; i++) {
+                let currentLoopDate = new Date(viewYear, viewMonth, i);
+                let dateStr = getLocalISODate(currentLoopDate);
+                
+                let statusClass = '';
+                let content = i;
+
+                if (habit.history[dateStr]) {
+                    statusClass = 'done';
+                } else if (dateStr < todayStr && dateStr >= creationStr) {
+                    statusClass = 'missed';
+                    content = '×';
+                }
+
+                // If future date, remove classes
+                if (dateStr > todayStr) {
+                    statusClass = '';
+                }
+
+                grid.innerHTML += `<div class="cal-day ${statusClass}">${content}</div>`;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('calendarModal').classList.remove('active');
+            viewingHabitId = null;
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('calendarModal');
+            if (event.target == modal) closeModal();
+        }
+
+        // Initialize App
+        renderDashboard();
+
+    </script>
+</body>
+</html>
